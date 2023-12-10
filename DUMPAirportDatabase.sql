@@ -17,6 +17,8 @@ CREATE TABLE Airports (
     AirportName VARCHAR(30) NOT NULL,
     Capacity INT NOT NULL
 );
+ALTER TABLE Airports
+ADD COLUMN CityID INT REFERENCES Cities(CityId);
 -- Flights
 CREATE TABLE Flights (
     FlightId SERIAL PRIMARY KEY,
@@ -112,3 +114,71 @@ CREATE TABLE Reviews (
 	
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+
+--queries
+--ispis imena i modela svih aviona s kapacitetom većim od 100
+SELECT AirplaneName, Model
+FROM Airplanes
+WHERE capacity > 100;
+
+--Ispis svih karata čija je cijena između 100 i 200 eura
+SELECT *
+FROM Tickets
+WHERE Price BETWEEN 100 AND 200;
+
+--Ispis svih pilotkinja s više od 20 odrađenih letova do danas
+SELECT *
+FROM Pilots
+WHERE (Pilots.Gender='Female' AND NumberOfFlights>20)
+
+--ispis broja letova u Split/iz Splita 2023. godine
+SELECT COUNT(*)
+FROM Flights
+WHERE (Flights.DepartureCityId=(SELECT CityId FROM Cities WHERE CityName = 'Split') AND EXTRACT(YEAR FROM StartTime) = 2023);
+
+--spis svih letova za Beč u prosincu 2023.
+SELECT *
+FROM Flights
+WHERE (Flights.DestinationCityId=(SELECT CityId FROM Cities WHERE CityName = 'Beč') AND EXTRACT(YEAR FROM StartTime) = 2023 AND EXTRACT(MONTH FROM StartTime) = 12);
+
+--ispis broj prodanih Economy letova kompanije AirDUMP u 2021.
+SELECT COUNT(*) AS NumberOfSoldEconomyTickets
+FROM Tickets
+JOIN Flights ON Tickets.FlightId = Flights.FlightId
+JOIN Companies ON Flights.CompanyId = Companies.CompanyId
+WHERE (Companies.CompanyName = 'AirDUMP' AND EXTRACT(YEAR FROM Flights.StartTime) = 2021 AND Tickets.SeatType = 'B1');
+
+--ispis prosječne ocjene letova kompanije AirDUMP
+SELECT AVG(Reviews.Rating) AS AverageGrade
+FROM Reviews
+JOIN Flights ON Reviews.FlightId = Flights.FlightId
+JOIN Companies ON Flights.CompanyId = Companies.CompanyId
+WHERE (Companies.CompanyName = 'AirDUMP');
+
+--ispis svih aerodroma udaljenih od Splita manje od 1500km
+SELECT Airports.AirportName
+FROM Airports
+JOIN Cities ON Cities.CityID = Airports.CityID
+WHERE (Cities.DistanceFromSplit<1500);
+
+--razmontirajte avione starije od 20 godina koji nemaju letove pred sobom
+UPDATE Airplanes
+SET Status = 'Dijelovi'
+WHERE ManufactureDate < CURRENT_DATE - INTERVAL '20 years'
+    AND AirplaneId NOT IN (
+        SELECT DISTINCT AirplaneId
+        FROM Flights
+        WHERE StartTime > CURRENT_TIMESTAMP
+    );
+	
+--izbrišite sve letove koji nemaju ni jednu prodanu kartu
+DELETE FROM Flights
+WHERE FlightId NOT IN 
+(
+    SELECT DISTINCT F.FlightId
+    FROM Flights f
+    JOIN Tickets t ON F.FlightId = T.FlightId
+);
+
+--izbrišite sve kartice vjernosti putnika čije prezime završava na -ov/a, -in/a (diskriminešn)
