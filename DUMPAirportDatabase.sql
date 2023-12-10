@@ -17,7 +17,6 @@ CREATE TABLE Airports (
     AirportName VARCHAR(30) NOT NULL,
     Capacity INT NOT NULL
 );
-
 -- Flights
 CREATE TABLE Flights (
     FlightId SERIAL PRIMARY KEY,
@@ -53,7 +52,6 @@ CREATE TABLE Pilots (
 	DateOfBirth DATE,
 	gender VARCHAR(10) CHECK (gender IN ('Male', 'Female'))
 );
-
 ALTER TABLE Pilots
 ADD CONSTRAINT CheckPilotAge
 CHECK (DateOfBirth > CURRENT_DATE - INTERVAL '20 years' AND dateOfBirth < CURRENT_DATE - INTERVAL '60 years');
