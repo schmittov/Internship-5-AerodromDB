@@ -94,7 +94,11 @@ CREATE TABLE Customers (
     FirstName VARCHAR(30) NOT NULL,
     LastName VARCHAR(30) NOT NULL
 );
-
+CREATE TABLE LoyalityCards(
+	LoyalityCardId SERIAL PRIMARY KEY,
+	CustomerId INT REFERENCES Customers(CustomerId),
+	RegisterTime DATE
+)
 -- Flight_Customers
 CREATE TABLE Flight_Customers (
     FlightCustomerId SERIAL PRIMARY KEY,
@@ -182,3 +186,9 @@ WHERE FlightId NOT IN
 );
 
 --izbrišite sve kartice vjernosti putnika čije prezime završava na -ov/a, -in/a (diskriminešn)
+DELETE FROM LoyalityCards
+WHERE CustomerId IN (
+    SELECT CustomerId
+    FROM Customers
+    WHERE LastName LIKE '%ov' OR LastName LIKE '%in' OR LastName LIKE '%ina' OR LastName LIKE '%ova'
+);
